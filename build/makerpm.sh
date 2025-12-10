@@ -54,7 +54,13 @@ RUN sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/CentOS-*.repo
 RUN sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/CentOS-*.repo
 RUN $DNF update -y
 RUN $DNF $DNF_GROUP_CMD -y "Development Tools"
-RUN  curl -L https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+RUN  arch=\$(uname -m) && \
+     case "\$arch" in \
+       x86_64|amd64) go_arch=linux-amd64 ;; \
+       aarch64|arm64) go_arch=linux-arm64 ;; \
+       *) echo "Unsupported arch \$arch" && exit 1 ;; \
+     esac && \
+     curl -L https://go.dev/dl/go$GOLANG_VERSION.\$go_arch.tar.gz | tar -C /usr/local -xzf -
 ENV PATH=\$PATH:/usr/local/go/bin
 RUN groupadd -g $GID builder
 RUN useradd -u $UID -g $GID builder
@@ -64,7 +70,13 @@ else
 FROM $IMAGE
 RUN $DNF update -y
 RUN $DNF $DNF_GROUP_CMD -y "Development Tools"
-RUN  curl -L https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+RUN  arch=\$(uname -m) && \
+     case "\$arch" in \
+       x86_64|amd64) go_arch=linux-amd64 ;; \
+       aarch64|arm64) go_arch=linux-arm64 ;; \
+       *) echo "Unsupported arch \$arch" && exit 1 ;; \
+     esac && \
+     curl -L https://go.dev/dl/go$GOLANG_VERSION.\$go_arch.tar.gz | tar -C /usr/local -xzf -
 ENV PATH=\$PATH:/usr/local/go/bin
 RUN groupadd -g $GID builder
 RUN useradd -u $UID -g $GID builder
