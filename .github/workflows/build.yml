@@ -45,7 +45,7 @@ jobs:
     uses: ./.github/workflows/build_binaries.yml
     with:
       runs-on: ${{ matrix.runner }}
-      container_json: '{"image":"golang:1.24-bullseye"}'
+      container_json: '{"image":"golang:1.24-bullseye","env":{"GOTOOLCHAIN":"auto"}}'
       setup-go: false
       ref: ${{ needs.env.outputs.ref }}
       ref_timestamp: ${{ needs.env.outputs.ref_timestamp }}
