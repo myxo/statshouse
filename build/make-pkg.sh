@@ -10,9 +10,10 @@ if [[ -z $TAG ]]; then
   exit 1
 fi
 
-# upstream-version
+# upstream-version (sanitize to Debian-friendly chars)
 UPSTREAM=$(git describe --tags --always --dirty)
 UPSTREAM=${UPSTREAM#v} # v1.0.0 -> 1.0.0
+UPSTREAM=${UPSTREAM//_/.} # Debian versions cannot contain underscores
 BUILD_TIME="$(date +%FT%T%z)"
 REACT_APP_BUILD_VERSION=$UPSTREAM-$BUILD_TIME
 if [[ -z $BUILD_VERSION ]]; then
@@ -23,6 +24,7 @@ if [[ -z $BUILD_VERSION ]]; then
     BUILD_VERSION="1:$UPSTREAM-$BUILD_VERSION_SUFFIX"
   fi
 fi
+BUILD_VERSION=${BUILD_VERSION//_/.} # ensure Debian version stays valid
 BUILD_MACHINE="$(uname -n -m -r -s)"
 BUILD_COMMIT="$(git log --format="%H" -n 1)"
 BUILD_COMMIT_TS="$(git log --format="%ct" -n 1)"
@@ -52,4 +54,3 @@ docker build --file build/packages.Dockerfile \
     --build-arg GOCACHE \
     --build-arg STATSHOUSE_AGG_ADDR \
     --output target/$TAG --target $TAG .
-

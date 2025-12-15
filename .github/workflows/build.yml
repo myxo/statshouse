@@ -74,39 +74,6 @@ jobs:
             .dummy_preserves_directory_structure
     outputs:
       artifact: statshouse-ui-${{needs.env.outputs.version}}
-  rpm:
-    strategy:
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            arch: amd64
-            image: centos:centos7
-            release_name: centos7
-          - runner: ubuntu-latest
-            arch: amd64
-            image: almalinux:9
-            release_name: alma9
-          - runner: ubuntu-24.04-arm
-            arch: arm64
-            image: almalinux:9
-            release_name: alma9
-    needs: [env, frontend]
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          repository: myxo/statshouse
-          ref: ${{needs.env.outputs.ref}}
-          fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          name: ${{needs.frontend.outputs.artifact}}
-      - run: echo "BUILD_VERSION=`echo ${{needs.env.outputs.version}} | sed -e 's:-:.:g'`" >> $GITHUB_ENV
-      - run: build/makerpm.sh ${{matrix.image}}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: statshouse-pkg-rpm-${{needs.env.outputs.version}}-${{matrix.release_name}}-${{matrix.arch}}
-          path: RPMS/*.rpm
   deb:
     strategy:
       matrix:
@@ -133,7 +100,7 @@ jobs:
           path: target/${{matrix.release}}/*.deb
   draft_release:
     if: ${{ github.event.inputs.draft_release }}
-    needs: [env, rpm, deb]
+    needs: [env, deb]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -145,6 +112,6 @@ jobs:
         with:
           pattern: statshouse-pkg-*
           path: pkg/
-      - run: gh release create --draft --generate-notes --title "${{github.event.inputs.tag}}" ${{github.event.inputs.tag}} $(find ./pkg -type f -name *.deb -o -name *.rpm)
+      - run: gh release create --draft --generate-notes --title "${{github.event.inputs.tag}}" ${{github.event.inputs.tag}} $(find ./pkg -type f -name *.deb)
         env:
           GITHUB_TOKEN: ${{secrets.DEVTOOLS_GITHUB_TOKEN}}
