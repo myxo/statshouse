@@ -12,7 +12,7 @@ jobs:
   env:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: myxo/statshouse
           ref: ${{ github.event.inputs.tag }}
@@ -59,7 +59,7 @@ jobs:
     container:
       image: node:18
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: myxo/statshouse
           ref: ${{needs.env.outputs.ref}}
@@ -93,7 +93,7 @@ jobs:
     needs: [env, frontend]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: myxo/statshouse
           ref: ${{needs.env.outputs.ref}}
@@ -121,7 +121,7 @@ jobs:
     needs: [env]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: myxo/statshouse
           ref: ${{needs.env.outputs.ref}}
@@ -136,7 +136,7 @@ jobs:
     needs: [env, rpm, deb]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: myxo/statshouse
           ref: ${{needs.env.outputs.ref}}
