@@ -2,10 +2,10 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build'
+        description: "Tag to build"
         required: true
       draft_release:
-        description: 'Draft a release'
+        description: "Draft a release"
         required: false
         default: true
 jobs:
@@ -33,26 +33,6 @@ jobs:
       ref_timestamp: ${{ steps.main.outputs.BUILD_COMMIT_TS }}
       timestamp: ${{ steps.main.outputs.BUILD_TIME }}
       version: ${{ steps.main.outputs.BUILD_VERSION }}
-  binaries:
-    needs: env
-    strategy:
-      matrix:
-        include:
-          - runner: ubuntu-24.04
-            arch: amd64
-          - runner: ubuntu-24.04-arm
-            arch: arm64
-    uses: ./.github/workflows/build_binaries.yml
-    with:
-      runs-on: ${{ matrix.runner }}
-      container_json: '{"image":"golang:1.24-bullseye","env":{"GOTOOLCHAIN":"auto"}}'
-      setup-go: false
-      ref: ${{ needs.env.outputs.ref }}
-      ref_timestamp: ${{ needs.env.outputs.ref_timestamp }}
-      timestamp: ${{ needs.env.outputs.timestamp }}
-      version: ${{ needs.env.outputs.version }}
-      name: linux
-      release: ${{ matrix.arch }}
   frontend:
     needs: env
     runs-on: ubuntu-latest
@@ -74,6 +54,26 @@ jobs:
             .dummy_preserves_directory_structure
     outputs:
       artifact: statshouse-ui-${{needs.env.outputs.version}}
+  binaries:
+    needs: env
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    uses: ./.github/workflows/build_binaries.yml
+    with:
+      runs-on: ${{ matrix.runner }}
+      container_json: '{"image":"golang:1.24-bullseye","env":{"GOTOOLCHAIN":"auto"}}'
+      setup-go: false
+      ref: ${{ needs.env.outputs.ref }}
+      ref_timestamp: ${{ needs.env.outputs.ref_timestamp }}
+      timestamp: ${{ needs.env.outputs.timestamp }}
+      version: ${{ needs.env.outputs.version }}
+      name: linux
+      release: ${{ matrix.arch }}
   deb:
     strategy:
       matrix:
