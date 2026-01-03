@@ -47,7 +47,6 @@ func (h statsHandler) handleStats(stats map[string]string) {
 		statBatchesTotalErr += v
 		if len(h.receiversUDP) > 1 {
 			stats[fmt.Sprintf("statshouse_udp_recv_%d_batches_err", i)] = strconv.FormatUint(v, 10)
-		}
 	}
 	stats["statshouse_udp_recv_packets"] = strconv.FormatUint(statPacketsTotal, 10)
 	stats["statshouse_udp_recv_bytes"] = strconv.FormatUint(statBytesTotal, 10)
