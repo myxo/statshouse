@@ -34,6 +34,7 @@ import (
 	"github.com/VKCOM/statshouse/internal/data_model/gen2/tlmetadata"
 	"github.com/VKCOM/statshouse/internal/format"
 	"github.com/VKCOM/statshouse/internal/metajournal"
+	"github.com/VKCOM/statshouse/internal/trustedsubnets"
 	"github.com/VKCOM/statshouse/internal/util"
 	"github.com/VKCOM/statshouse/internal/vkgo/build"
 	"github.com/VKCOM/statshouse/internal/vkgo/rpc"
@@ -101,6 +102,8 @@ var argv struct {
 	metadataNet              string
 	cluster                  string
 	mappingsFileCount        int
+
+	trustedSubnetGroupsFlag trustedsubnets.Flag
 
 	api.HandlerOptions
 	api.Config
@@ -190,7 +193,7 @@ func run() int {
 	c := rpc.NewClient(
 		// rpc.ClientWithProtocolVersion(rpc.LatestProtocolVersion),
 		rpc.ClientWithLogf(log.Printf),
-		rpc.ClientWithTrustedSubnetGroups(build.TrustedSubnetGroups()))
+		rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups()))
 	defer func() { _ = c.Close() }()
 
 	var mappingFiles []*os.File
@@ -280,7 +283,7 @@ func run() int {
 		argv.showInvisible,
 		chV2,
 		&tlmetadata.Client{
-			Client:  rpc.NewClient(rpc.ClientWithLogf(log.Printf), rpc.ClientWithCryptoKey(rpcCryptoKey), rpc.ClientWithTrustedSubnetGroups(build.TrustedSubnetGroups())),
+			Client:  rpc.NewClient(rpc.ClientWithLogf(log.Printf), rpc.ClientWithCryptoKey(rpcCryptoKey), rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())),
 			Network: argv.metadataNet,
 			Address: argv.metadataAddr,
 			ActorID: argv.metadataActorID,
@@ -421,7 +424,7 @@ func run() int {
 			hijackListener.AddConnection(conn)
 		}),
 		rpc.ServerWithLogf(log.Printf),
-		rpc.ServerWithTrustedSubnetGroups(build.TrustedSubnetGroups()),
+		rpc.ServerWithTrustedSubnetGroups(trustedSubnetGroups()),
 		rpc.ServerWithHandler(handlerRPC.Handle),
 		rpc.ServerWithCryptoKeys(rpcCryptoKeys),
 		metrics.ServerWithMetrics,
@@ -475,6 +478,13 @@ func run() int {
 	return 0
 }
 
+func trustedSubnetGroups() [][]string {
+	if groups, ok := argv.trustedSubnetGroupsFlag.Get(); ok {
+		return groups
+	}
+	return build.TrustedSubnetGroups()
+}
+
 func parseCommandLine() (err error) {
 	flag.BoolVar(&argv.accessLog, "access-log", false, "write HTTP access log to stdout")
 	flag.StringVar(&argv.rpcCryptoKeyPath, "rpc-crypto-path", "", "path to RPC crypto key")
@@ -526,6 +536,7 @@ func parseCommandLine() (err error) {
 	flag.IntVar(&argv.mappingsFileCount, "mappings-file-count", 16, "count of files for sharding metadata mappings")
 	argv.HandlerOptions.Bind(flag.CommandLine)
 	argv.Config.Bind(flag.CommandLine, api.DefaultConfig())
+	argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 	build.FlagParseShowVersionHelp()
 
 	if len(flag.Args()) != 0 {

@@ -33,6 +33,7 @@ import (
 	"github.com/VKCOM/statshouse/internal/pcache"
 	"github.com/VKCOM/statshouse/internal/receiver"
 	"github.com/VKCOM/statshouse/internal/stats"
+	"github.com/VKCOM/statshouse/internal/trustedsubnets"
 	"github.com/VKCOM/statshouse/internal/util"
 	"github.com/VKCOM/statshouse/internal/vkgo/build"
 	"github.com/VKCOM/statshouse/internal/vkgo/rpc"
@@ -88,6 +89,8 @@ var argv struct {
 
 	// for old mode
 	historicStorageDir string
+
+	trustedSubnetGroupsFlag trustedsubnets.Flag
 
 	agent.Config
 }
@@ -223,6 +226,7 @@ func run() int {
 	main.agent, err = agent.MakeAgent("tcp",
 		argv.cacheDir,
 		aesPwd,
+		trustedSubnetGroups(),
 		argv.Config,
 		argv.customHostName,
 		format.TagValueIDComponentAgent,
@@ -355,7 +359,7 @@ func run() int {
 		rpc.ServerWithLogf(logErr.Printf),
 		rpc.ServerWithVersion(build.Info()),
 		rpc.ServerWithCryptoKeys([]string{aesPwd}),
-		rpc.ServerWithTrustedSubnetGroups(build.TrustedSubnetGroups()),
+		rpc.ServerWithTrustedSubnetGroups(trustedSubnetGroups()),
 		rpc.ServerWithSyncHandler(handlerRPC.Handle),
 		rpc.ServerWithStatsHandler(statsHandler{receiversUDP: main.receiversUDP, receiverRPC: receiverRPC, sh2: main.agent, journal: journalFast}.handleStats),
 		metrics.ServerWithMetrics,
@@ -565,7 +569,14 @@ func argvCreateClient() (rpc.Client, string) {
 		rpc.ClientWithProtocolVersion(1),
 		rpc.ClientWithLogf(logErr.Printf),
 		rpc.ClientWithCryptoKey(cryptoKey),
-		rpc.ClientWithTrustedSubnetGroups(build.TrustedSubnetGroups())), cryptoKey
+		rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())), cryptoKey
+}
+
+func trustedSubnetGroups() [][]string {
+	if groups, ok := argv.trustedSubnetGroupsFlag.Get(); ok {
+		return groups
+	}
+	return build.TrustedSubnetGroups()
 }
 
 func parseCommandLine() (int, error) {
@@ -630,6 +641,7 @@ func parseCommandLine() (int, error) {
 		flag.BoolVar(&argv.hardwareMetricScrapeDisable, "hardware-metric-scrape-disable", false, "disable hardware metric scraping")
 		flag.StringVar(&argv.envFilePath, "env-file-path", "/etc/statshouse_env.yml", "statshouse environment file path")
 		argv.Config.Bind(flag.CommandLine, agent.DefaultConfig())
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		// DEPRECATED but still in use
 		var sampleFactor int
 		var maxMemLimit uint64
@@ -677,6 +689,7 @@ func parseCommandLine() (int, error) {
 		flag.StringVar(&argv.aesPwdFile, "aes-pwd-file", "", "path to AES password file, will try to read "+defaultPathToPwd+" if not set")
 		flag.StringVar(&argv.aggAddr, "agg-addr", "", "comma-separated list of aggregator addresses to test.")
 		flag.StringVar(&argv.mapString, "string", "production", "string to map.")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		argv.AggregatorAddresses = strings.Split(argv.aggAddr, ",")
 		if len(argv.AggregatorAddresses) == 0 {
@@ -686,6 +699,7 @@ func parseCommandLine() (int, error) {
 	case "test_longpoll":
 		flag.StringVar(&argv.aesPwdFile, "aes-pwd-file", "", "path to AES password file, will try to read "+defaultPathToPwd+" if not set")
 		flag.StringVar(&argv.aggAddr, "agg-addr", "", "comma-separated list of aggregator addresses to test.")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		argv.AggregatorAddresses = strings.Split(argv.aggAddr, ",")
 		if len(argv.AggregatorAddresses) == 0 {
@@ -699,6 +713,7 @@ func parseCommandLine() (int, error) {
 		flag.StringVar(&argv.statshouseAddr, "statshouse-addr", "127.0.0.1:13337", "statshouse address for tlclient")
 		flag.StringVar(&argv.statshouseNet, "statshouse-net", "tcp4", "statshouse network for tlclient")
 		flag.DurationVar(&argv.tlclientTimeout, "timeout", 2*time.Second, "timeout of RPC call to agent")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		return mainTLClient(), nil
 	case "tlclient.api", "tlclient.api.stub":
@@ -708,6 +723,7 @@ func parseCommandLine() (int, error) {
 		preferTL2 := false
 		flag.BoolVar(&preferTL2, "tl2", false, "prefer TL2")
 		flag.DurationVar(&argv.tlclientTimeout, "timeout", 2*time.Second, "timeout of RPC call to statshouse API")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		if verb == "tlclient.api.stub" {
 			return mainTLClientAPIStub(preferTL2), nil
@@ -721,6 +737,7 @@ func parseCommandLine() (int, error) {
 		flag.StringVar(&argv.metadataNet, "metadata-net", "tcp4", "")
 		flag.StringVar(&argv.metric, "metric", "", "metric name, if specified then strings are considered metric tags")
 		flag.StringVar(&argv.tags, "tag", "", "string to be searched for a int32 mapping")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		return mainTagMapping(), nil
 	case "put_tag_bootstrap":
@@ -728,6 +745,7 @@ func parseCommandLine() (int, error) {
 		flag.StringVar(&argv.aesPwdFile, "aes-pwd-file", "", "path to AES password file, will try to read "+defaultPathToPwd+" if not set")
 		flag.StringVar(&argv.metadataAddr, "metadata-addr", "127.0.0.1:2442", "")
 		flag.StringVar(&argv.metadataNet, "metadata-net", "tcp4", "")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		return mainPutTagBootstrap(), nil
 	case "publish_tag_drafts":
@@ -736,6 +754,7 @@ func parseCommandLine() (int, error) {
 		flag.StringVar(&argv.aesPwdFile, "aes-pwd-file", "", "path to AES password file, will try to read "+defaultPathToPwd+" if not set")
 		flag.StringVar(&argv.metadataAddr, "metadata-addr", "127.0.0.1:2442", "")
 		flag.StringVar(&argv.metadataNet, "metadata-net", "tcp4", "")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		return mainPublishTagDrafts(), nil
 	case "mass_update_metadata":
@@ -745,6 +764,7 @@ func parseCommandLine() (int, error) {
 		flag.StringVar(&argv.aesPwdFile, "aes-pwd-file", "", "path to AES password file, will try to read "+defaultPathToPwd+" if not set")
 		flag.StringVar(&argv.metadataAddr, "metadata-addr", "127.0.0.1:2442", "")
 		flag.StringVar(&argv.metadataNet, "metadata-net", "tcp4", "")
+		argv.trustedSubnetGroupsFlag.Bind(flag.CommandLine)
 		build.FlagParseShowVersionHelp()
 		return massUpdateMetadata(), nil
 	case "simple_fsync":

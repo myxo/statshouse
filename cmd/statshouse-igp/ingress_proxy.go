@@ -28,7 +28,6 @@ import (
 	"github.com/VKCOM/statshouse/internal/data_model/gen2/tlstatshouse"
 	"github.com/VKCOM/statshouse/internal/format"
 	"github.com/VKCOM/statshouse/internal/pcache"
-	"github.com/VKCOM/statshouse/internal/vkgo/build"
 	"github.com/VKCOM/statshouse/internal/vkgo/rpc"
 	"github.com/VKCOM/statshouse/internal/vkgo/srvfunc"
 	"go.uber.org/atomic"
@@ -139,7 +138,7 @@ func (config *ConfigIngressProxy) ReadIngressKeys(ingressPwdDir string) error {
 	return nil
 }
 
-func RunIngressProxy(ctx context.Context, config ConfigIngressProxy, aesPwd string, mappingsCache *pcache.MappingsCache) error {
+func RunIngressProxy(ctx context.Context, config ConfigIngressProxy, aesPwd string, mappingsCache *pcache.MappingsCache, trustedSubnetGroups [][]string) error {
 	proxyCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -162,7 +161,7 @@ func RunIngressProxy(ctx context.Context, config ConfigIngressProxy, aesPwd stri
 	} else {
 		var err error
 		p.agent, err = agent.MakeAgent(
-			"tcp", "", aesPwd, config.ConfigAgent, argv.customHostName,
+			"tcp", "", aesPwd, trustedSubnetGroups, config.ConfigAgent, argv.customHostName,
 			format.TagValueIDComponentIngressProxy,
 			nil, mappingsCache,
 			nil, nil,
@@ -207,8 +206,8 @@ func RunIngressProxy(ctx context.Context, config ConfigIngressProxy, aesPwd stri
 		p.agent.Run(0, 0, 0)
 	}
 	p.uniqueStartTime.Store(p.startTime)
-	rpc.ClientWithTrustedSubnetGroups(build.TrustedSubnetGroups())(&p.clientOpts)
-	rpc.ServerWithTrustedSubnetGroups(build.TrustedSubnetGroups())(&p.serverOpts)
+	rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups)(&p.clientOpts)
+	rpc.ServerWithTrustedSubnetGroups(trustedSubnetGroups)(&p.serverOpts)
 	go func() {
 		for p.hostnameID.Load() == 0 {
 			if tag, ok := p.agent.MapTagForProxy(p.agent.HostName()); ok {
