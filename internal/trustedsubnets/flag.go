@@ -37,6 +37,8 @@ func (f *Flag) Set(s string) error {
 	return nil
 }
 
+func (f *Flag) Type() string { return "trusted-subnet-groups" }
+
 // Get returns parsed groups and whether the flag was set.
 // Nil groups means "explicitly empty".
 func (f *Flag) Get() ([][]string, bool) { return f.groups, f.set }
