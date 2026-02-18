@@ -106,13 +106,6 @@ func parseArgs() {
 	pflag.Parse()
 }
 
-func trustedSubnetGroups() [][]string {
-	if groups, ok := argv.trustedSubnetGroupsFlag.Get(); ok {
-		return groups
-	}
-	return build.TrustedSubnetGroups()
-}
-
 const binlogMagic = 0xdf1273ab
 
 func lookupGroup(groupname string) (int, error) {
@@ -347,7 +340,7 @@ func run() error {
 		rpc.ServerWithLogf(log.Printf),
 		// meta is accessible via RPC proxy, so needs some timeout for long poll contexts clean up
 		rpc.ServerWithDefaultResponseTimeout(5*time.Minute),
-		rpc.ServerWithTrustedSubnetGroups(trustedSubnetGroups()),
+		rpc.ServerWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups())),
 		rpc.ServerWithCryptoKeys(rpcCryptoKeys),
 		metrics.ServerWithMetrics,
 	)

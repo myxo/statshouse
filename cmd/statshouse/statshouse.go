@@ -226,7 +226,7 @@ func run() int {
 	main.agent, err = agent.MakeAgent("tcp",
 		argv.cacheDir,
 		aesPwd,
-		trustedSubnetGroups(),
+		argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()),
 		argv.Config,
 		argv.customHostName,
 		format.TagValueIDComponentAgent,
@@ -359,7 +359,7 @@ func run() int {
 		rpc.ServerWithLogf(logErr.Printf),
 		rpc.ServerWithVersion(build.Info()),
 		rpc.ServerWithCryptoKeys([]string{aesPwd}),
-		rpc.ServerWithTrustedSubnetGroups(trustedSubnetGroups()),
+		rpc.ServerWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups())),
 		rpc.ServerWithSyncHandler(handlerRPC.Handle),
 		rpc.ServerWithStatsHandler(statsHandler{receiversUDP: main.receiversUDP, receiverRPC: receiverRPC, sh2: main.agent, journal: journalFast}.handleStats),
 		metrics.ServerWithMetrics,
@@ -569,14 +569,7 @@ func argvCreateClient() (rpc.Client, string) {
 		rpc.ClientWithProtocolVersion(1),
 		rpc.ClientWithLogf(logErr.Printf),
 		rpc.ClientWithCryptoKey(cryptoKey),
-		rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())), cryptoKey
-}
-
-func trustedSubnetGroups() [][]string {
-	if groups, ok := argv.trustedSubnetGroupsFlag.Get(); ok {
-		return groups
-	}
-	return build.TrustedSubnetGroups()
+		rpc.ClientWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()))), cryptoKey
 }
 
 func parseCommandLine() (int, error) {

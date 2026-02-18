@@ -1,4 +1,4 @@
-// Copyright 2025 V Kontakte LLC
+// Copyright 2026 V Kontakte LLC
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,8 +14,6 @@ import (
 	"github.com/VKCOM/statshouse/internal/vkgo/rpc"
 )
 
-// Flag provides --trusted-subnet-groups parsing for application binaries.
-// Format: group1,group1b;group2 (CIDR list, groups split by ';').
 type Flag struct {
 	groups [][]string
 	set    bool
@@ -39,12 +37,15 @@ func (f *Flag) Set(s string) error {
 
 func (f *Flag) Type() string { return "trusted-subnet-groups" }
 
-// Get returns parsed groups and whether the flag was set.
-// Nil groups means "explicitly empty".
-func (f *Flag) Get() ([][]string, bool) { return f.groups, f.set }
+func (f *Flag) GetOrDefault(defaultGroups [][]string) [][]string {
+	if f.set {
+		return f.groups
+	}
+	return defaultGroups
+}
 
 func (f *Flag) Bind(fs *flag.FlagSet) {
-	fs.Var(f, "trusted-subnet-groups", "trusted subnet groups; format: group1,group1b;group2 (CIDR list, groups split by ';')")
+	fs.Var(f, "trusted-subnet-groups", "trusted subnet groups; format: group1,group1b;group2 (group - comma-separated CIDR list)")
 }
 
 func ParseGroups(src string) ([][]string, error) {

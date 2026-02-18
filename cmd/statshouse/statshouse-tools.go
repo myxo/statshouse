@@ -36,6 +36,7 @@ import (
 	"github.com/VKCOM/statshouse/internal/format"
 	"github.com/VKCOM/statshouse/internal/metajournal"
 	"github.com/VKCOM/statshouse/internal/receiver"
+	"github.com/VKCOM/statshouse/internal/vkgo/build"
 	"github.com/VKCOM/statshouse/internal/vkgo/rpc"
 )
 
@@ -474,7 +475,7 @@ func mainTagMapping() int {
 				// rpc.ClientWithProtocolVersion(rpc.LatestProtocolVersion),
 				rpc.ClientWithLogf(log.Printf),
 				rpc.ClientWithCryptoKey(aesPwd),
-				rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())),
+				rpc.ClientWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()))),
 			Network: argv.metadataNet,
 			Address: argv.metadataAddr,
 			ActorID: argv.metadataActorID,
@@ -534,7 +535,7 @@ func mainPutTagBootstrap() int {
 			// rpc.ClientWithProtocolVersion(rpc.LatestProtocolVersion),
 			rpc.ClientWithLogf(log.Printf),
 			rpc.ClientWithCryptoKey(aesPwd),
-			rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())),
+			rpc.ClientWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()))),
 		Network: argv.metadataNet,
 		Address: argv.metadataAddr,
 		ActorID: argv.metadataActorID,
@@ -563,7 +564,7 @@ func mainPublishTagDrafts() int {
 		Client: rpc.NewClient(
 			// rpc.ClientWithProtocolVersion(rpc.LatestProtocolVersion),
 			rpc.ClientWithCryptoKey(readAESPwd()),
-			rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())),
+			rpc.ClientWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()))),
 		Network: argv.metadataNet,
 		Address: argv.metadataAddr,
 		ActorID: argv.metadataActorID,
@@ -741,7 +742,7 @@ func massUpdateMetadata() int {
 		Client: rpc.NewClient(
 			// rpc.ClientWithProtocolVersion(rpc.LatestProtocolVersion),
 			rpc.ClientWithCryptoKey(readAESPwd()),
-			rpc.ClientWithTrustedSubnetGroups(trustedSubnetGroups())),
+			rpc.ClientWithTrustedSubnetGroups(argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()))),
 		Network: argv.metadataNet,
 		Address: argv.metadataAddr,
 		ActorID: argv.metadataActorID,

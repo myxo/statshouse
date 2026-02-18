@@ -68,13 +68,6 @@ func logRotate() {
 	}
 }
 
-func trustedSubnetGroups() [][]string {
-	if groups, ok := argv.trustedSubnetGroupsFlag.Get(); ok {
-		return groups
-	}
-	return build.TrustedSubnetGroups()
-}
-
 func main() {
 	os.Exit(mainAggregator())
 }
@@ -161,7 +154,7 @@ func mainAggregator() int {
 	// we ignore error because cache can be damaged
 	mappingsCache, _ := pcache.LoadMappingsCacheFile(fpmc, argv.RemoteInitial.MappingCacheSize, argv.RemoteInitial.MappingCacheTTL)
 	startDiscCacheTime := time.Now() // we only have disk cache before. Be carefull when redesigning
-	agg, err := aggregator.MakeAggregator(fj, fjCompact, mappingsCache, mappingsStorage, argv.cacheDir, argv.aggAddr, aesPwd, trustedSubnetGroups(), argv.ConfigAggregator, argv.customHostName, argv.logLevel == "trace")
+	agg, err := aggregator.MakeAggregator(fj, fjCompact, mappingsCache, mappingsStorage, argv.cacheDir, argv.aggAddr, aesPwd, argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()), argv.ConfigAggregator, argv.customHostName, argv.logLevel == "trace")
 	if err != nil {
 		log.Println(err)
 		return 1

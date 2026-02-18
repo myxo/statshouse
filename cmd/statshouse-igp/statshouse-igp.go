@@ -57,13 +57,6 @@ func logRotate() {
 	}
 }
 
-func trustedSubnetGroups() [][]string {
-	if groups, ok := argv.trustedSubnetGroupsFlag.Get(); ok {
-		return groups
-	}
-	return build.TrustedSubnetGroups()
-}
-
 func main() {
 	os.Exit(mainIngressProxy())
 }
@@ -125,7 +118,7 @@ func mainIngressProxy() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	exit := make(chan error, 1)
 	go func() {
-		exit <- RunIngressProxy(ctx, argv.ConfigIngressProxy, aesPwd, mappingsCache, trustedSubnetGroups())
+		exit <- RunIngressProxy(ctx, argv.ConfigIngressProxy, aesPwd, mappingsCache, argv.trustedSubnetGroupsFlag.GetOrDefault(build.TrustedSubnetGroups()))
 	}()
 	signalC := make(chan os.Signal, 1)
 	signal.Notify(signalC, syscall.SIGINT, syscall.SIGUSR1)
